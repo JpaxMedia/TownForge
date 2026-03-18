@@ -11,7 +11,7 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private createTextures() {
-    const g = this.make.graphics({ x: 0, y: 0, add: false });
+    const g = this.make.graphics({ x: 0, y: 0 });
     const S = 48;
 
     // Grass tile

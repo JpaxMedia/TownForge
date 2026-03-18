@@ -133,10 +133,3 @@ export default function MilitaryPanel({ onClose }: MilitaryPanelProps) {
     </div>
   );
 }
-         )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
