@@ -107,3 +107,12 @@ export function getOrCreatePlayerName(): string {
 export function setPlayerName(name: string): void {
   localStorage.setItem(`${LS_PREFIX}player_name`, name);
 }
+
+export function generateWorldSeed(source: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < source.length; i++) {
+    hash ^= source.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return Math.abs(hash >>> 0) || 1;
+}

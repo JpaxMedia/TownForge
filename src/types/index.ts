@@ -89,7 +89,21 @@ export interface BuildingDef {
   effect: BuildingEffect;
   description: string;
   color: number;
+  roofColor: number;
+  renderHeight: number;
+  footprintScale: number;
   emoji: string;
+}
+
+export type TerrainBiome = 'meadow' | 'grove' | 'ridge' | 'clay';
+
+export type TerrainTool = 'raise' | 'lower';
+
+export interface TerrainCell {
+  x: number;
+  y: number;
+  height: number;
+  biome: TerrainBiome;
 }
 
 export type NotificationType = 'info' | 'warning' | 'danger' | 'success';

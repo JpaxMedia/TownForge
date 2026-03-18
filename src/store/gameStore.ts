@@ -8,6 +8,7 @@ import {
   NotificationType,
   GamePhase,
   Resources,
+  TerrainTool,
 } from '../types';
 import { BUILDING_DEFINITIONS, XP_PER_LEVEL } from '../game/config';
 import {
@@ -33,11 +34,14 @@ interface GameState {
   events: GameEvent[];
   worldMap: Town[];
   selectedBuilding: BuildingType | null;
+  selectedTerrainTool: TerrainTool | null;
   gamePhase: GamePhase;
   notifications: Notification[];
   tick: number;
   ticksSinceGrowth: number;
   festivalTicksLeft: number;
+  worldSeed: number;
+  terrainEdits: Record<string, number>;
 
   // Actions
   setPlayerId: (id: string) => void;
@@ -53,11 +57,16 @@ interface GameState {
   addNotification: (message: string, type: NotificationType) => void;
   dismissNotification: (id: string) => void;
   setSelectedBuilding: (type: BuildingType | null) => void;
+  setSelectedTerrainTool: (tool: TerrainTool | null) => void;
+  clearSelection: () => void;
+  raiseTerrain: (x: number, y: number, currentHeight: number) => boolean;
+  lowerTerrain: (x: number, y: number, currentHeight: number) => boolean;
   updatePopulation: () => void;
   triggerEvent: () => void;
   setWorldMap: (towns: Town[]) => void;
   processTick: () => void;
   setInitialState: (state: Record<string, unknown>) => void;
+  setWorldSeed: (seed: number) => void;
 }
 
 let notifId = 0;
@@ -83,14 +92,18 @@ export const useGameStore = create<GameState>((set, get) => ({
   events: [],
   worldMap: [],
   selectedBuilding: null,
+  selectedTerrainTool: null,
   gamePhase: 'building',
   notifications: [],
   tick: 0,
   ticksSinceGrowth: 0,
   festivalTicksLeft: 0,
+  worldSeed: 1,
+  terrainEdits: {},
 
   setPlayerId: (id) => set({ playerId: id }),
   setPlayerName: (name) => set({ playerName: name }),
+  setWorldSeed: (seed) => set({ worldSeed: seed }),
 
   setInitialState: (partial) => set(partial as Partial<GameState>),
 
@@ -320,7 +333,54 @@ export const useGameStore = create<GameState>((set, get) => ({
     set(s => ({ notifications: s.notifications.filter(n => n.id !== id) }));
   },
 
-  setSelectedBuilding: (type) => set({ selectedBuilding: type }),
+  setSelectedBuilding: (type) => set({
+    selectedBuilding: type,
+    selectedTerrainTool: type ? null : get().selectedTerrainTool,
+  }),
+
+  setSelectedTerrainTool: (tool) => set({
+    selectedTerrainTool: tool,
+    selectedBuilding: tool ? null : get().selectedBuilding,
+  }),
+
+  clearSelection: () => set({
+    selectedBuilding: null,
+    selectedTerrainTool: null,
+  }),
+
+  raiseTerrain: (x, y, currentHeight) => {
+    const key = `${x},${y}`;
+    if (currentHeight >= 6) {
+      get().addNotification('This tile is already at the maximum build height.', 'warning');
+      return false;
+    }
+
+    set(s => ({
+      terrainEdits: {
+        ...s.terrainEdits,
+        [key]: Math.min(6, (s.terrainEdits[key] ?? 1) + 1),
+      },
+    }));
+    get().addNotification('Terrain raised by one level.', 'success');
+    return true;
+  },
+
+  lowerTerrain: (x, y, currentHeight) => {
+    const key = `${x},${y}`;
+    if (currentHeight <= 1) {
+      get().addNotification('This tile is already at ground level.', 'warning');
+      return false;
+    }
+
+    set(s => ({
+      terrainEdits: {
+        ...s.terrainEdits,
+        [key]: Math.max(1, (s.terrainEdits[key] ?? 1) - 1),
+      },
+    }));
+    get().addNotification('Terrain lowered by one level.', 'info');
+    return true;
+  },
 
   updatePopulation: () => {
     const state = get();
@@ -415,12 +475,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Random events (10% chance per tick)
     if (Math.random() < 0.10) {
       get().triggerEvent();
-    }
-
-    // XP for surviving
-    get().addXP(2);
-  },
-}));
     }
 
     // XP for surviving
