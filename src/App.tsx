@@ -7,6 +7,7 @@ import {
   setPlayerName,
   loadGameState,
   getWorldTowns,
+  generateWorldSeed,
 } from './services/worldService';
 import { XP_PER_LEVEL } from './game/config';
 
@@ -41,6 +42,7 @@ export default function App() {
     // Load saved state
     try {
       const saved = await loadGameState(id) as any;
+      const worldSeed = typeof saved?.worldSeed === 'number' ? saved.worldSeed : generateWorldSeed(id);
       if (saved) {
         setInitialState({
           level: saved.level ?? 1,
@@ -52,10 +54,15 @@ export default function App() {
           buildings: saved.buildings ?? [],
           happiness: saved.happiness ?? 50,
           tick: saved.tick ?? 0,
+          worldSeed,
+          terrainEdits: saved.terrainEdits ?? {},
         });
+      } else {
+        setInitialState({ worldSeed, terrainEdits: {} });
       }
     } catch (e) {
       console.warn('Could not load saved state:', e);
+      setInitialState({ worldSeed: generateWorldSeed(id), terrainEdits: {} });
     }
 
     // Load world towns
@@ -105,24 +112,25 @@ export default function App() {
         <div className="relative z-10 text-center px-4 max-w-sm w-full">
           {/* Logo */}
           <div className="mb-6">
-            <div className="text-6xl sm:text-8xl mb-2">🏰</div>
+            <div className="text-6xl sm:text-8xl mb-2">🏔️</div>
             <h1 className="text-4xl sm:text-5xl font-minecraft font-bold text-yellow-400 tracking-wider"
               style={{ textShadow: '3px 3px 0 #7a5000, 6px 6px 0 #3a2500' }}>
               TOWNFORGE
             </h1>
             <p className="text-green-400 font-minecraft text-sm mt-2 tracking-wide">
-              Build. Grow. Conquer.
+              Raise the land. Build upward. Rule the ridge.
             </p>
           </div>
 
           {/* Features list */}
           <div className="bg-black/60 border-2 border-green-800 p-4 mb-6 text-left">
             {[
-              '🏗️ Build a thriving city',
-              '⚔️ Train soldiers & raid',
-              '🌾 Manage food & resources',
-              '🗺️ World map multiplayer',
-              '📈 Level up to 50',
+              '🧱 Build on a 3D isometric frontier',
+              '🏘️ Raise a layered voxel skyline',
+              '⛰️ Sculpt the terrain tile by tile',
+              '🌾 Balance food, wood, stone, and gold',
+              '⚔️ Train troops and raid rival towns',
+              '🗺️ Expand a persistent frontier map',
             ].map(f => (
               <div key={f} className="text-green-300 font-minecraft text-xs py-0.5">{f}</div>
             ))}
